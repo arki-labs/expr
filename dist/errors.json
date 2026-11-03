@@ -1,0 +1,47 @@
+[
+  {
+    "code": "expr.invalid_locale",
+    "package": "@arki/expr",
+    "kind": "failure",
+    "what": "`syntaxFor` got a locale tag the runtime's `Intl` rejects.",
+    "fix": "Pass a BCP 47 tag such as `'de-DE'`, or a syntax preset (`canonical`, `decimalComma`).",
+    "verify": "cd packages/expr && bun run vitest run src/language.test.ts",
+    "source": "src/errors.ts:105"
+  },
+  {
+    "code": "expr.invalid_syntax",
+    "package": "@arki/expr",
+    "kind": "failure",
+    "what": "`parseSyntax` got a stored value that is not a syntax: an unknown mark, or a decimal comma with the `,` separator.",
+    "fix": "Store `canonical` or `decimalComma`, or `{ decimal: '.', separator: ',' | ';' }` or `{ decimal: ',', separator: ';' }`.",
+    "verify": "cd packages/expr && bun run vitest run src/language.test.ts",
+    "source": "src/errors.ts:117"
+  },
+  {
+    "code": "expr.invalid_text",
+    "package": "@arki/expr",
+    "kind": "failure",
+    "what": "The text given to `parse`, `parseEquation` or `evaluate`, or the stored JSON given to `fromJSON`, is not an expression the language accepts. `cause` is the `ParseError`, with `span`, `expected` and `found` for the caret.",
+    "fix": "Show the user the span from `cause` and ask for the expression again; do not retry the same text.",
+    "verify": "cd packages/expr && bun run vitest run src/complex.test.ts src/grammar.test.ts src/json.test.ts",
+    "source": "src/errors.ts:69"
+  },
+  {
+    "code": "expr.no_value",
+    "package": "@arki/expr",
+    "kind": "failure",
+    "what": "The expression has no value in its domain: `x/0`, `0^i`, `sqrt(-1)` in a real domain, an overflow, or an exact result that needs a rounding mode. `cause` is the `@arki/math` error.",
+    "fix": "Show the user that the expression has no value; read `cause.code` for which rule, or pass a rounding mode for an exact domain.",
+    "verify": "cd packages/expr && bun run vitest run src/complex.test.ts src/rational.test.ts src/decimal.test.ts",
+    "source": "src/errors.ts:93"
+  },
+  {
+    "code": "expr.over_budget",
+    "package": "@arki/expr",
+    "kind": "failure",
+    "what": "The text given to `parse`, `parseEquation` or `evaluate`, or the JSON given to `fromJSON`, went over a length, token, depth, node, step or digit budget. `cause` is the `ExprLimitError`.",
+    "fix": "Reject the input as too large, or raise `options.limits` on purpose.",
+    "verify": "cd packages/expr && bun run vitest run src/complex.test.ts src/hostile.test.ts",
+    "source": "src/errors.ts:81"
+  }
+]

@@ -1,0 +1,79 @@
+{
+  "name": "@arki/expr",
+  "version": "0.1.0",
+  "description": "A safe expression language on @arki/math: a hand-written parser with a typed, versioned AST, host-registered functions, budgets on every input, and canonical printing.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arki-labs/arki.git"
+  },
+  "homepage": "https://arki.dev",
+  "bugs": {
+    "url": "https://github.com/arki-labs/arki/issues"
+  },
+  "keywords": [
+    "arki",
+    "typescript",
+    "math",
+    "expression",
+    "parser",
+    "ast",
+    "calculator",
+    "formula"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./float": {
+      "types": "./dist/float.d.ts",
+      "import": "./dist/float.js",
+      "default": "./dist/float.js"
+    },
+    "./latex": {
+      "types": "./dist/latex.d.ts",
+      "import": "./dist/latex.js",
+      "default": "./dist/latex.js"
+    },
+    "./decimal": {
+      "types": "./dist/decimal.d.ts",
+      "import": "./dist/decimal.js",
+      "default": "./dist/decimal.js"
+    },
+    "./rational": {
+      "types": "./dist/rational.d.ts",
+      "import": "./dist/rational.js",
+      "default": "./dist/rational.js"
+    },
+    "./complex": {
+      "types": "./dist/complex.d.ts",
+      "import": "./dist/complex.js",
+      "default": "./dist/complex.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/**",
+    "src/**",
+    "!src/**/*.test.*",
+    "!src/**/*.spec.*",
+    "!src/**/__tests__/**",
+    "README.md",
+    "docs/**",
+    "llms.txt",
+    "LICENSE",
+    "package.json"
+  ],
+  "dependencies": {
+    "@arki/failure": "0.3.0",
+    "@arki/math": "0.2.0",
+    "@arki/schema": "0.3.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

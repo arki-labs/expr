@@ -1,0 +1,812 @@
+{
+  "package": "@arki/expr",
+  "version": "0.1.0",
+  "entries": [
+    {
+      "subpath": ".",
+      "name": "BinaryNode",
+      "kind": "type",
+      "signature": "export type BinaryNode = { readonly kind: 'binary'; readonly op: BinaryOperator; readonly left: Node; readonly right: Node; /** True for juxtaposition (`2x`); only ever true with `op: '*'`. */ readonly implicit: boolean; readonly span: Span; };",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": ".",
+      "name": "BinaryOperator",
+      "kind": "type",
+      "signature": "export type BinaryOperator = '+' | '-' | '*' | '/' | '^';",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": ".",
+      "name": "Budget",
+      "kind": "type",
+      "signature": "export type Budget = 'length' | 'tokens' | 'depth' | 'nodes' | 'steps' | 'digits';",
+      "jsdocSummary": "The budget a limit applies to (RFC §11). Parsing checks the first four."
+    },
+    {
+      "subpath": ".",
+      "name": "CallNode",
+      "kind": "type",
+      "signature": "export type CallNode = { readonly kind: 'call'; readonly fn: string; readonly args: readonly Node[]; readonly notation: CallNotation; readonly span: Span; };",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": ".",
+      "name": "CallNotation",
+      "kind": "type",
+      "signature": "export type CallNotation = 'call' | 'bars' | 'radical';",
+      "jsdocSummary": "How a call was written: `abs(x)` is `'call'`, `|x|` is `'bars'` (fn `abs`), `√x` is `'radical'` (fn `sqrt`)."
+    },
+    {
+      "subpath": ".",
+      "name": "canonical",
+      "kind": "variable",
+      "signature": "export declare const canonical: Syntax;",
+      "jsdocSummary": "`.` decimals, `,` between arguments. The default, and the only storage syntax."
+    },
+    {
+      "subpath": ".",
+      "name": "children",
+      "kind": "function",
+      "signature": "export declare function children(node: Node): readonly Node[];",
+      "jsdocSummary": "The direct children of a node, left to right."
+    },
+    {
+      "subpath": ".",
+      "name": "ConstantDefinition",
+      "kind": "type",
+      "signature": "export type ConstantDefinition = { readonly latex?: string; };",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": ".",
+      "name": "ConstantSpec",
+      "kind": "type",
+      "signature": "export type ConstantSpec = { readonly latex: string | undefined; };",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": ".",
+      "name": "decimalComma",
+      "kind": "variable",
+      "signature": "export declare const decimalComma: Syntax;",
+      "jsdocSummary": "`,` decimals, `;` between arguments (the spreadsheet convention of de, fr, ro, …)."
+    },
+    {
+      "subpath": ".",
+      "name": "defineLanguage",
+      "kind": "function",
+      "signature": "export declare function defineLanguage<const Functions extends FunctionTable = Readonly<Record<never, FunctionDefinition>>, const Constants extends ConstantTable = Readonly<Record<never, ConstantDefinition>>, BaseFunction extends string = never, BaseConstant extends string = never>(definition: LanguageDefinition<Functions, Constants, BaseFunction, BaseConstant>): Language<Extract<keyof Functions, string> | BaseFunction, Extract<keyof Constants, string> | BaseConstant>;",
+      "jsdocSummary": "Builds a language. Names must match the expression `name` grammar (a letter, then letters, digits or `_`); a name defined twice — as a function and a constant, or again on top of `extends` — throws `InvalidArgumentError`."
+    },
+    {
+      "subpath": ".",
+      "name": "defineSyntax",
+      "kind": "function",
+      "signature": "export declare function defineSyntax(definition: SyntaxDefinition): Syntax;",
+      "jsdocSummary": "Validates a syntax written in code and returns it frozen. The builder: it throws `InvalidArgumentError` for a decimal comma with a `,` separator, or for an unknown mark from an untyped caller. Stored settings go through {@link parseSyntax}, which returns a failure instead."
+    },
+    {
+      "subpath": ".",
+      "name": "Equation",
+      "kind": "type",
+      "signature": "export type Equation = { readonly version: 1; readonly source: string; readonly left: Node; readonly right: Node; readonly warnings: readonly Warning[]; };",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": ".",
+      "name": "Expr",
+      "kind": "type",
+      "signature": "export type Expr = { readonly version: 1; readonly source: string; readonly root: Node; readonly warnings: readonly Warning[]; };",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": ".",
+      "name": "ExprLimitError",
+      "kind": "class",
+      "signature": "export declare class ExprLimitError extends ResourceLimitError { readonly budget: Budget; readonly limit: number; /** The size seen when the budget broke; for streaming checks this is `limit + 1`. */ readonly actual: number; constructor(budget: Budget, limit: number, actual: number); }",
+      "jsdocSummary": "An input went over one of its budgets. Thrown before the expensive work, never after."
+    },
+    {
+      "subpath": ".",
+      "name": "FactorialNode",
+      "kind": "type",
+      "signature": "export type FactorialNode = { readonly kind: 'factorial'; readonly arg: Node; readonly span: Span; };",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": ".",
+      "name": "fromJSON",
+      "kind": "function",
+      "signature": "export declare function fromJSON(value: unknown, options?: FromJSONOptions): Equation | Expr | import(\"@arki/failure\").Failure<\"expr.invalid_text\", undefined> | import(\"@arki/failure\").Failure<\"expr.over_budget\", undefined>;",
+      "jsdocSummary": "Rebuilds an expression or equation from AST JSON (the value, not the text: pass `JSON.parse(text)`). Returns `InvalidExpression` (the `ParseError` is the `cause`) for anything that is not a valid version-1 tree in `options.language`, and `ExpressionOverBudget` when it is over budget. Pre-1.0 there is no migration: only version 1 is accepted. A language not built by `defineLanguage` is a bug and still throws."
+    },
+    {
+      "subpath": ".",
+      "name": "FromJSONOptions",
+      "kind": "type",
+      "signature": "export type FromJSONOptions = { /** The language the tree must belong to. Default `scientific`. */ readonly language?: Language; readonly limits?: Limits; };",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": ".",
+      "name": "FunctionDefinition",
+      "kind": "type",
+      "signature": "export type FunctionDefinition = { /** An exact count, or inclusive `[min, max]`. */ readonly arity: number | readonly [number, number]; readonly latex?: string; /** Steps one call counts against the `steps` budget: a positive integer, default 1. */ readonly cost?: number; };",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": ".",
+      "name": "FunctionSpec",
+      "kind": "type",
+      "signature": "export type FunctionSpec = { /** Inclusive bounds on the argument count. */ readonly arity: readonly [min: number, max: number]; /** LaTeX command for the function name (e.g. `\\\\sin`); `undefined` means `\\\\operatorname{name}`. */ readonly latex: string | undefined; /** Steps one call counts against the `steps` budget (RFC §11). 1 unless the host declared more. */ readonly cost: number; };",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": ".",
+      "name": "GroupNode",
+      "kind": "type",
+      "signature": "export type GroupNode = { readonly kind: 'group'; readonly inner: Node; readonly span: Span; };",
+      "jsdocSummary": "Parentheses the user wrote."
+    },
+    {
+      "subpath": ".",
+      "name": "Language",
+      "kind": "type",
+      "signature": "export type Language<FunctionName extends string = string, ConstantName extends string = string> = { readonly functionSpec: (name: string) => FunctionSpec | undefined; readonly constantSpec: (name: string) => ConstantSpec | undefined; /** Registered function names, sorted. */ readonly functionNames: () => FunctionName[]; /** Registered constant names, sorted. */ readonly constantNames: () => ConstantName[]; };",
+      "jsdocSummary": "A language. The type parameters carry its function and constant names, so a domain's `compile` can require an implementation for each host name."
+    },
+    {
+      "subpath": ".",
+      "name": "LanguageDefinition",
+      "kind": "type",
+      "signature": "export type LanguageDefinition<Functions extends FunctionTable = FunctionTable, Constants extends ConstantTable = ConstantTable, BaseFunction extends string = string, BaseConstant extends string = string> = { /** Start from this language. Redefining one of its names is a conflict. */ readonly extends?: Language<BaseFunction, BaseConstant>; readonly functions?: Functions; readonly constants?: Constants; };",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": ".",
+      "name": "Limits",
+      "kind": "type",
+      "signature": "export type Limits = { /** Characters of source text, checked before lexing. Default 10 000. */ readonly length?: number; /** Tokens, checked while lexing. Default 5 000. */ readonly tokens?: number; /** Nesting depth of the tree (a leaf is 1), checked while parsing. Also bounds every recursion over the tree. Default 256. */ readonly depth?: number; /** Nodes in the tree, checked while parsing. Default 5 000. */ readonly nodes?: number; };",
+      "jsdocSummary": "Budgets checked while parsing and in `fromJSON` (RFC §11). Each is a positive integer."
+    },
+    {
+      "subpath": ".",
+      "name": "NameNode",
+      "kind": "type",
+      "signature": "export type NameNode = { readonly kind: 'name'; readonly name: string; readonly span: Span; };",
+      "jsdocSummary": "A variable or constant, as typed. Multi-letter names are never split here (that is `compile`'s job)."
+    },
+    {
+      "subpath": ".",
+      "name": "names",
+      "kind": "function",
+      "signature": "export declare function names(expr: Expr | Equation, options?: { readonly language?: Language; }): Names;",
+      "jsdocSummary": "The names `expr` uses. Identifiers are reported as typed: `xy` is one variable here even if `compile` later reads it as `x·y`."
+    },
+    {
+      "subpath": ".",
+      "name": "Names",
+      "kind": "type",
+      "signature": "export type Names = { /** Names that are not constants of the language: what `compile` must be told about. */ readonly variables: string[]; /** Constants of the language that appear (`pi`, `e`, …). */ readonly constants: string[]; /** Functions called, including `abs` for `|x|` and `sqrt` for `√x`. */ readonly functions: string[]; };",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": ".",
+      "name": "Node",
+      "kind": "type",
+      "signature": "export type Node = NumberNode | NameNode | UnaryNode | BinaryNode | CallNode | FactorialNode | GroupNode;",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": ".",
+      "name": "NumberNode",
+      "kind": "type",
+      "signature": "export type NumberNode = { readonly kind: 'number'; /** The literal with a `.` decimal mark, exactly as typed otherwise: `'0.50'`, `'1e-7'`, `'.5'`. */ readonly raw: string; readonly span: Span; };",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": ".",
+      "name": "parse",
+      "kind": "function",
+      "signature": "export declare function parse(text: string, options?: ParseOptions): Expr | import(\"@arki/failure\").Failure<\"expr.invalid_text\", undefined> | import(\"@arki/failure\").Failure<\"expr.over_budget\", undefined>;",
+      "jsdocSummary": "Parses an expression, or returns `InvalidExpression` (`expr.invalid_text`; the `ParseError` with its span is the `cause`) for text the grammar rejects and `ExpressionOverBudget` (`expr.over_budget`) when a budget breaks. Warnings flag legal but easily misread inputs such as `1/2x`. A non-string `text` or a language not built by `defineLanguage` is a bug and still throws."
+    },
+    {
+      "subpath": ".",
+      "name": "parseEquation",
+      "kind": "function",
+      "signature": "export declare function parseEquation(text: string, options?: ParseOptions): Equation | import(\"@arki/failure\").Failure<\"expr.invalid_text\", undefined> | import(\"@arki/failure\").Failure<\"expr.over_budget\", undefined>;",
+      "jsdocSummary": "Parses `lhs = rhs`, with exactly one `=`. Returns the same failures as {@link parse}."
+    },
+    {
+      "subpath": ".",
+      "name": "ParseError",
+      "kind": "class",
+      "signature": "export declare class ParseError extends MathError { readonly code: ParseErrorCode; readonly remediation = \"Fix the text at `span`; `expected` lists what fits there.\"; readonly span: Span; /** Same as `span.start`: where to put the caret. */ readonly position: number; /** What the parser would have accepted at `span`, e.g. `['(']` or `['number', 'name']`. */ readonly expected: readonly string[]; /** The text found at `span`, or `'end of input'`. */ readonly found: string; constructor(message: string, details: { readonly code: ParseErrorCode; readonly span: Span; readonly expected?: readonly string[]; readonly found: string; }); }",
+      "jsdocSummary": "The input text (or a stored AST) is not an expression this language accepts."
+    },
+    {
+      "subpath": ".",
+      "name": "ParseErrorCode",
+      "kind": "type",
+      "signature": "export type ParseErrorCode = 'unexpected-token' | 'unexpected-end' | 'unbalanced-paren' | 'unbalanced-bar' | 'bad-number' | 'not-a-function' | 'unknown-name' | 'arity' | 'name-conflict' | 'not-in-domain';",
+      "jsdocSummary": "Why a text, AST or language was rejected. Apps translate messages by this code."
+    },
+    {
+      "subpath": ".",
+      "name": "ParseFailure",
+      "kind": "type",
+      "signature": "export type ParseFailure = FailureOf<(typeof PARSE_FAILURES)[number]>;",
+      "jsdocSummary": "A failure value returned by `parse`, `parseEquation` and `fromJSON`."
+    },
+    {
+      "subpath": ".",
+      "name": "ParseOptions",
+      "kind": "type",
+      "signature": "export type ParseOptions = { /** The registered functions and constants. Default `scientific`. */ readonly language?: Language; /** Decimal mark and argument separator. Default `canonical`. */ readonly syntax?: Syntax; readonly limits?: Limits; /** * Names the host will declare as variables at compile. Only needed to read * a variable directly before `(` as a product (`x(y+1)`): without it, a name * that is neither a function nor a constant followed by `(` is a * `not-a-function` error, never a guess. */ readonly variables?: readonly string[]; };",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": ".",
+      "name": "print",
+      "kind": "function",
+      "signature": "export declare function print(value: Expr | Equation | Node, options?: PrintOptions): string;",
+      "jsdocSummary": "Prints an expression, equation or node. The default (canonical style and syntax) is the form to store: `parse(print(expr))` gives the same tree back."
+    },
+    {
+      "subpath": ".",
+      "name": "PrintOptions",
+      "kind": "type",
+      "signature": "export type PrintOptions = { /** Decimal mark and argument separator. Default `canonical` (`.` and `,`). */ readonly syntax?: Syntax; /** Default `'canonical'`, the form to store. */ readonly style?: PrintStyle; /** Bounds the recursion over hand-built trees. Default 256, as in `parse`. */ readonly limits?: { readonly depth?: number; }; };",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": ".",
+      "name": "PrintStyle",
+      "kind": "type",
+      "signature": "export type PrintStyle = 'canonical' | 'display';",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": ".",
+      "name": "scientific",
+      "kind": "variable",
+      "signature": "export declare const scientific: Language<\"abs\" | \"acos\" | \"acosh\" | \"acot\" | \"acoth\" | \"acsc\" | \"acsch\" | \"asec\" | \"asech\" | \"asin\" | \"asinh\" | \"atan\" | \"atanh\" | \"cbrt\" | \"ceil\" | \"cos\" | \"cosh\" | \"cot\" | \"coth\" | \"csc\" | \"csch\" | \"exp\" | \"factorial\" | \"fix\" | \"floor\" | \"gamma\" | \"ln\" | \"log\" | \"log10\" | \"log2\" | \"mod\" | \"nthRoot\" | \"pow\" | \"round\" | \"sec\" | \"sech\" | \"sign\" | \"sin\" | \"sinh\" | \"sqrt\" | \"tan\" | \"tanh\", \"e\" | \"i\" | \"pi\">;",
+      "jsdocSummary": "The built-in language: trigonometric, inverse, hyperbolic and inverse hyperbolic functions (with the `sec csc cot` families), `exp ln log log10 log2 sqrt cbrt nthRoot pow abs sign ceil floor round fix factorial gamma mod`, and the constants `pi`, `e` and `i`. `log(x)` is the natural log; `log(x, b)` takes a base."
+    },
+    {
+      "subpath": ".",
+      "name": "Span",
+      "kind": "type",
+      "signature": "export type Span = { readonly start: number; readonly end: number; };",
+      "jsdocSummary": "A range of the source text, as UTF-16 offsets (`start` inclusive, `end` exclusive)."
+    },
+    {
+      "subpath": ".",
+      "name": "Syntax",
+      "kind": "type",
+      "signature": "export type Syntax = { readonly decimal: '.'; readonly separator: ',' | ';'; } | { readonly decimal: ','; readonly separator: ';'; };",
+      "jsdocSummary": "A valid syntax. A decimal comma always pairs with the `;` separator, so `f(1,5; 2)` is unambiguous."
+    },
+    {
+      "subpath": ".",
+      "name": "SyntaxDefinition",
+      "kind": "type",
+      "signature": "export type SyntaxDefinition = { readonly decimal: '.' | ','; readonly separator: ',' | ';'; };",
+      "jsdocSummary": "What `defineSyntax` accepts; it rejects `{ decimal: ',', separator: ',' }`."
+    },
+    {
+      "subpath": ".",
+      "name": "syntaxFor",
+      "kind": "function",
+      "signature": "export declare function syntaxFor(locale?: string | readonly string[]): import(\"@arki/failure\").Failure<\"expr.invalid_locale\", undefined> | Syntax;",
+      "jsdocSummary": "The preset for a locale: `decimalComma` where the locale writes `1,5`, `canonical` otherwise. Calls `Intl` only when invoked, never at module load. Returns `InvalidLocale` for a tag `Intl` rejects. Reads the mark from `format`, which every runtime has, so React Native's Hermes on iOS (no `formatToParts`) gets the same answer."
+    },
+    {
+      "subpath": ".",
+      "name": "UnaryNode",
+      "kind": "type",
+      "signature": "export type UnaryNode = { readonly kind: 'unary'; readonly op: '-' | '+'; readonly arg: Node; readonly span: Span; };",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": ".",
+      "name": "walk",
+      "kind": "function",
+      "signature": "export declare function walk(node: Node, visit: (node: Node, parent: Node | undefined) => boolean | void): void;",
+      "jsdocSummary": "Visits `node` and its descendants in pre-order (parents first, children left to right). Return `false` from `visit` to skip a node's children. Iterative, so it never overflows the stack, whatever the depth."
+    },
+    {
+      "subpath": ".",
+      "name": "Warning",
+      "kind": "type",
+      "signature": "export type Warning = { readonly code: WarningCode; readonly span: Span; readonly message: string; /** What to write instead, built from the source, e.g. `write (1/2)x or 1/(2x)`. */ readonly hint: string; };",
+      "jsdocSummary": "A legal but easily misread input, such as `1/2x` (read as `(1/2)·x`)."
+    },
+    {
+      "subpath": ".",
+      "name": "WarningCode",
+      "kind": "type",
+      "signature": "export type WarningCode = 'implicit-after-division' | 'implicit-after-power' | 'split-after-division';",
+      "jsdocSummary": "`implicit-after-division` and `implicit-after-power` come from `parse`; `split-after-division` comes from `compile`, which reads `a/bc` as `a/(b·c)` when it splits `bc` into letters."
+    },
+    {
+      "subpath": "./complex",
+      "name": "AbortSignalLike",
+      "kind": "type",
+      "signature": "export type AbortSignalLike = { readonly aborted: boolean; readonly reason?: unknown; };",
+      "jsdocSummary": "The part of `AbortSignal` that `sample` reads."
+    },
+    {
+      "subpath": "./complex",
+      "name": "Angle",
+      "kind": "type",
+      "signature": "export type Angle = 'rad' | 'deg';",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./complex",
+      "name": "CallOptions",
+      "kind": "type",
+      "signature": "export type CallOptions = { /** Checked before each operation on a value above 100 digits; an aborted signal throws its `reason`. */ readonly signal?: AbortSignalLike; };",
+      "jsdocSummary": "Options of a single call."
+    },
+    {
+      "subpath": "./complex",
+      "name": "compile",
+      "kind": "function",
+      "signature": "export declare function compile<const V extends string = never, L extends Language = Scientific>(expr: Expr, options?: CompileOptions<L, V>): CompiledFunction<V>;",
+      "jsdocSummary": "Compiles an expression to a function of its declared variables, on Complexes. Throws `ParseError` (`unknown-name`, `name-conflict` — `i` is a constant here —, `not-in-domain` for `cbrt nthRoot sign ceil floor round fix mod factorial gamma`, `arity`) and `ExprLimitError` here, before any evaluation. Constant subtrees are folded."
+    },
+    {
+      "subpath": "./complex",
+      "name": "CompiledEquation",
+      "kind": "type",
+      "signature": "export type CompiledEquation<V extends string = string> = ExactEquation<Complex, ComplexLike, V>;",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./complex",
+      "name": "CompiledFunction",
+      "kind": "type",
+      "signature": "export type CompiledFunction<V extends string = string> = ExactFunction<Complex, ComplexLike, V>;",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./complex",
+      "name": "compileEquation",
+      "kind": "function",
+      "signature": "export declare function compileEquation<const V extends string = never, L extends Language = Scientific>(equation: Equation, options?: CompileOptions<L, V>): CompiledEquation<V>;",
+      "jsdocSummary": "Compiles both sides of `lhs = rhs` and their difference, on one set of slots."
+    },
+    {
+      "subpath": "./complex",
+      "name": "CompileOptions",
+      "kind": "type",
+      "signature": "export type CompileOptions<L extends Language = Scientific, V extends string = string> = { /** The language the expression was parsed with. Default `scientific`. */ readonly language?: L; /** The variables, in slot order. `i` cannot be one: it is a constant here. */ readonly variables?: readonly V[]; /** The unit of trigonometric arguments and inverse-trigonometric results. Default `'rad'`. */ readonly angle?: Angle; readonly limits?: ExactLimits; } & HostTables<L, ComplexFunction, ComplexLike>;",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./complex",
+      "name": "Complex",
+      "kind": "class",
+      "signature": "export declare class Complex { static readonly ZERO: Complex; static readonly ONE: Complex; static readonly I: Complex; readonly re: number; readonly im: number; private constructor(); /** Builds `re + im·i` from finite parts. `-0` becomes `0`. */ static fromParts(re: number, im: number): Complex; /** Converts a number, a `Complex`, or text such as `'3+4i'`, `'-2i'`, `'5'`. */ static from(value: ComplexInput): Complex; /** `r·(cos θ + i·sin θ)`. `r` must be ≥ 0; both must be finite. */ static fromPolar(r: number, theta: number): Complex; plus(other: ComplexInput): Complex; minus(other: ComplexInput): Complex; times(other: ComplexInput): Complex; /** * Robust complex division (Baudin & Smith 2012, \"A Robust Complex Division * in Scilab\"): Smith's algorithm, which avoids overflow in `|divisor|²`, * plus exact power-of-two scaling when a part is near overflow or underflow, * so `(1e308 + 1e308i) / (1e308 + 1e308i)` is `1`. Throws on a zero divisor, * and `NumericRangeError` only when the quotient itself is out of range. */ dividedBy(other: ComplexInput): Complex; /** `1 / z`. Throws `DivisionByZeroError` for zero. */ inverse(): Complex; negated(): Complex; /** `re - im·i`. */ conjugate(): Complex; /** * Modulus `|z|`, via `Math.hypot` so large parts do not overflow. Throws * `NumericRangeError` when `|z|` itself is beyond the float range, which * finite parts allow (up to √2 × `Number.MAX_VALUE`, as for `1e308 + 1e308i`). */ abs(): number; /** Principal argument in `(-π, π]`. The argument of zero is `0`, as in C's `carg`. */ arg(): number; /** `{ r: abs(), theta: arg() }`; throws `NumericRangeError` where `abs` does. */ toPolar(): Polar; /** `e^z`. */ exp(): Complex; /** Principal natural logarithm `ln|z| + i·arg(z)`. Throws `InvalidArgumentError` for zero. */ ln(): Complex; /** Principal logarithm in `base`: `ln(z) / ln(base)`. `base` must not be 0 or 1. */ log(base: ComplexInput): Complex; /** Principal square root: the root with `re > 0`, or `im ≥ 0` when `re` is 0. */ sqrt(): Complex; /** * Principal power `z^w = e^(w·ln z)`. An integer `w` uses repeated * multiplication (exact for small Gaussian integers); a real `w` uses polar * form (`|z|^w` at angle `w·arg z`). `0^w` is `1` for `w = 0` and `0` when * `re(w) > 0`; otherwise it throws `DivisionByZeroError`. */ pow(exponent: ComplexInput): Complex; private integerPower; /** sin(x + iy) = sin x cosh y + i cos x sinh y; overflows (`NumericRangeError`) only when the result does. */ sin(): Complex; /** cos(x + iy) = cos x cosh y − i sin x sinh y. */ cos(): Complex; /** tan z = −i·tanh(iz), by Kahan's cancellation-free formula; never overflows. */ tan(): Complex; /** sinh z = −i·sin(iz) = sinh x cos y + i cosh x sin y. */ sinh(): Complex; /** cosh z = cos(iz) = cosh x cos y + i sinh x sin y. */ cosh(): Complex; /** tanh z by Kahan's formula: (βρs + it) / (1 + βs²) with t = tan y, β = 1 + t², s = sinh x, ρ = √(1 + s²). */ tanh(): Complex; /** * Principal arcsine, real part in [-π/2, π/2]. Cuts: the real axis outside * [-1, 1]; `asin(2)` is `π/2 - 1.3170i`, `asin(-2)` is `-π/2 + 1.3170i`. */ asin(): Complex; /** * Principal arccosine, real part in [0, π]; `acos z = π/2 − asin z`, same * cuts. `acos(2)` is `1.3170i`, `acos(-2)` is `π - 1.3170i`. */ acos(): Complex; /** * Principal arctangent, real part in [-π/2, π/2]; `atan z = −i·atanh(iz)`. * Cuts: the imaginary axis outside [-i, i]; `atan(2i)` is `π/2 + 0.5493i`, * `atan(-2i)` is `-π/2 - 0.5493i`. `atan(±i)` throws `InvalidArgumentError`. */ atan(): Complex; /** * Principal inverse hyperbolic sine, `asinh z = −i·asin(iz)`. Cuts: the * imaginary axis outside [-i, i]; `asinh(2i)` is `1.3170 + π/2·i`. */ asinh(): Complex; /** * Principal inverse hyperbolic cosine, real part ≥ 0 and imaginary part in * [-π, π]. Cut: the real axis left of 1, valued from above: `acosh(0.5)` is * `1.0472i`, `acosh(-2)` is `1.3170 + πi`. */ acosh(): Complex; /** * Principal inverse hyperbolic tangent, imaginary part in [-π/2, π/2]. Cuts: * the real axis outside [-1, 1]; `atanh(2)` is `0.5493 - π/2·i`, * `atanh(-2)` is `-0.5493 + π/2·i`. `atanh(±1)` throws `InvalidArgumentError`. */ atanh(): Complex; /** * All `n` complex `n`-th roots, counter-clockwise from the principal root * (index 0, the one `pow(1/n)` returns). Zero has `n` roots, all zero. `n` above 1,000,000 throws * `ResourceLimitError`: the roots are built as objects, so `n` is bounded by memory. */ nthRoots(n: number): Complex[]; isReal(): boolean; isZero(): boolean; /** Exact equality of both parts. */ eq(other: ComplexInput): boolean; /** * `|z - w| ≤ tolerance × max(1, |z|, |w|)`: absolute near zero, relative * for large values, like `approxEqual` for numbers. */ approxEqual(other: ComplexInput, tolerance?: number): boolean; /** `3 + 4i`, `3 - 4i`, `-2i`, `i`, `5` (see the module notes for the grammar). */ toString(): string; toJSON(): string; /** Throws. A `Complex` never silently becomes a float. */ valueOf(): never; [Symbol.toPrimitive](hint: 'string' | 'number' | 'default'): string; readonly [Symbol.toStringTag] = \"Complex\"; }",
+      "jsdocSummary": "A complex number `re + im·i` with finite float parts. Create one with `complex(3, 4)`, `complex('3+4i')` or `Complex.fromPolar(r, theta)`. Equality (`eq`) is exact; use `approxEqual` after float arithmetic."
+    },
+    {
+      "subpath": "./complex",
+      "name": "ComplexFunction",
+      "kind": "type",
+      "signature": "export type ComplexFunction = (...args: Complex[]) => Complex;",
+      "jsdocSummary": "A host function in this domain: Complexes in, a Complex out."
+    },
+    {
+      "subpath": "./complex",
+      "name": "ComplexLike",
+      "kind": "type",
+      "signature": "export type ComplexLike = Complex | number | { readonly re: number; readonly im: number; };",
+      "jsdocSummary": "A value for a variable or a host constant: a `Complex`, a finite number (a real), or finite `{ re, im }` parts. Text is not a value: parse it."
+    },
+    {
+      "subpath": "./complex",
+      "name": "Detailed",
+      "kind": "type",
+      "signature": "export type Detailed<T> = { readonly value: T; readonly exact: boolean; };",
+      "jsdocSummary": "A value and whether it is exact: `false` once any step rounded."
+    },
+    {
+      "subpath": "./complex",
+      "name": "evaluate",
+      "kind": "function",
+      "signature": "export declare function evaluate<L extends Language = Scientific>(text: string, options?: EvaluateOptions<L>): Complex | import(\"@arki/failure\").Failure<\"expr.invalid_text\", undefined> | import(\"@arki/failure\").Failure<\"expr.no_value\", undefined> | import(\"@arki/failure\").Failure<\"expr.over_budget\", undefined>;",
+      "jsdocSummary": "Parses, compiles and evaluates an expression with no variables: `evaluate('sqrt(-4)')` is `2i`. Reads outside text, so it returns the value or a failure from `EVALUATE_FAILURES` (`expr.invalid_text`, `expr.over_budget`, `expr.no_value`, each with the thrown error as `cause`) and never throws for bad text."
+    },
+    {
+      "subpath": "./complex",
+      "name": "EvaluateOptions",
+      "kind": "type",
+      "signature": "export type EvaluateOptions<L extends Language = Scientific> = CallOptions & { readonly language?: L; readonly syntax?: Syntax; readonly angle?: Angle; /** Parse budgets plus the compile budgets. */ readonly limits?: Limits & ExactLimits; } & HostTables<L, ComplexFunction, ComplexLike>;",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./complex",
+      "name": "ExactLimits",
+      "kind": "type",
+      "signature": "export type ExactLimits = CompileLimits & { /** * Digits: of each literal, checked at compile, and of a power or factorial * result, estimated before computing it (`9^9^9`, `10000!`). Default 1 000. */ readonly digits?: number; };",
+      "jsdocSummary": "The budgets of an exact domain's `compile` (`@arki/expr/decimal`, `@arki/expr/rational`)."
+    },
+    {
+      "subpath": "./complex",
+      "name": "Reading",
+      "kind": "type",
+      "signature": "export type Reading = { readonly span: Span; /** The name as typed, e.g. `'xy'`. */ readonly name: string; /** The letters it was read as, e.g. `['x', 'y']`. */ readonly letters: readonly string[]; };",
+      "jsdocSummary": "A multi-letter name that `compile` read as a product of single letters."
+    },
+    {
+      "subpath": "./complex",
+      "name": "Scope",
+      "kind": "type",
+      "signature": "export type Scope<V extends string = string> = Readonly<Record<V, ComplexLike>>;",
+      "jsdocSummary": "Values for the declared variables. Extra keys are ignored."
+    },
+    {
+      "subpath": "./decimal",
+      "name": "AbortSignalLike",
+      "kind": "type",
+      "signature": "export type AbortSignalLike = { readonly aborted: boolean; readonly reason?: unknown; };",
+      "jsdocSummary": "The part of `AbortSignal` that `sample` reads."
+    },
+    {
+      "subpath": "./decimal",
+      "name": "CallOptions",
+      "kind": "type",
+      "signature": "export type CallOptions = { /** Checked before each operation on a value above 100 digits; an aborted signal throws its `reason`. */ readonly signal?: AbortSignalLike; };",
+      "jsdocSummary": "Options of a single call."
+    },
+    {
+      "subpath": "./decimal",
+      "name": "compile",
+      "kind": "function",
+      "signature": "export declare function compile<const V extends string = never, L extends Language = Scientific>(expr: Expr, options?: CompileOptions<L, V>): CompiledFunction<V>;",
+      "jsdocSummary": "Compiles an expression to a function of its declared variables, on Decimals. Throws `ParseError` (`unknown-name`, `name-conflict`, `not-in-domain` for trigonometry and `i`, `arity`) and `ExprLimitError` here, before any evaluation. Constant subtrees are folded."
+    },
+    {
+      "subpath": "./decimal",
+      "name": "CompiledEquation",
+      "kind": "type",
+      "signature": "export type CompiledEquation<V extends string = string> = ExactEquation<Decimal, DecimalInput, V>;",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./decimal",
+      "name": "CompiledFunction",
+      "kind": "type",
+      "signature": "export type CompiledFunction<V extends string = string> = ExactFunction<Decimal, DecimalInput, V>;",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./decimal",
+      "name": "compileEquation",
+      "kind": "function",
+      "signature": "export declare function compileEquation<const V extends string = never, L extends Language = Scientific>(equation: Equation, options?: CompileOptions<L, V>): CompiledEquation<V>;",
+      "jsdocSummary": "Compiles both sides of `lhs = rhs` and their difference, on one set of slots."
+    },
+    {
+      "subpath": "./decimal",
+      "name": "CompileOptions",
+      "kind": "type",
+      "signature": "export type CompileOptions<L extends Language = Scientific, V extends string = string> = DecimalContext & { /** The language the expression was parsed with. Default `scientific`. */ readonly language?: L; /** The variables, in slot order. Any other name must be a constant or split into declared letters. */ readonly variables?: readonly V[]; readonly limits?: ExactLimits; } & HostTables<L, DecimalFunction, DecimalInput>;",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./decimal",
+      "name": "Decimal",
+      "kind": "class",
+      "signature": "export declare class Decimal { readonly coefficient: bigint; readonly scale: number; private constructor(); static from(value: DecimalInput): Decimal; /** Exact sum; accumulates one coefficient instead of allocating a Decimal per element. */ static sum(values: Iterable<DecimalInput>): Decimal; /** Comparator for sorting: `prices.sort(Decimal.compare)`. */ static compare(a: DecimalInput, b: DecimalInput): -1 | 0 | 1; static max(first: DecimalInput, ...rest: DecimalInput[]): Decimal; static min(first: DecimalInput, ...rest: DecimalInput[]): Decimal; plus(other: DecimalInput): Decimal; minus(other: DecimalInput): Decimal; times(other: DecimalInput): Decimal; /** * Exact when the result terminates (`1 ÷ 8 = 0.125`). When it does not * (`1 ÷ 3`), throws `RoundingNecessaryError` unless you say how to round: * `dividedBy(3, { scale: 4, rounding: 'halfEven' })`. */ dividedBy(other: DecimalInput, options?: ScaleOptions): Decimal; /** Remainder with the sign of the dividend, like JavaScript's `%`. */ mod(other: DecimalInput): Decimal; /** Integer exponent. Negative exponents must terminate (`2^-2 = 0.25`) or they throw. */ pow(exponent: number): Decimal; abs(): Decimal; negated(): Decimal; /** * Changes the number of fraction digits. Adding digits is always exact; * dropping non-zero digits needs a rounding mode or it throws. */ toScale(scale: number, rounding?: RoundingMode): Decimal; /** `toScale` with the display-friendly default: half-up. `round(2)` on `1.005` gives `1.01`. */ round(places?: number, rounding?: RoundingMode): Decimal; /** * Rounds to `digits` significant figures: `decimal('123456').roundToSignificant(2)` → `120000`, * `decimal('0.012345').roundToSignificant(3)` → `0.0123`. Fewer digits than that are left as is. Default half-up. */ roundToSignificant(digits: number, rounding?: RoundingMode): Decimal; /** Rounds to the nearest multiple of `step`: `decimal('1.23').roundTo('0.05')` → `1.25`. Default half-up. */ roundTo(step: DecimalInput, rounding?: RoundingMode): Decimal; /** Drops trailing zeros: `1.500` → `1.5`, `2.00` → `2`. */ trim(): Decimal; compareTo(other: DecimalInput): -1 | 0 | 1; eq(other: DecimalInput): boolean; lt(other: DecimalInput): boolean; lte(other: DecimalInput): boolean; gt(other: DecimalInput): boolean; gte(other: DecimalInput): boolean; isZero(): boolean; isPositive(): boolean; isNegative(): boolean; isInteger(): boolean; sign(): -1 | 0 | 1; /** Plain notation, never exponent form: `'0.000001'`, `'-12.30'`. */ toString(): string; /** Like `Number.prototype.toFixed`, but on the exact value and with a chosen rounding mode. */ toFixed(places: number, rounding?: RoundingMode): string; /** The nearest double. Throws if that would overflow or collapse a non-zero value to zero. */ toNumber(): number; /** Requires an integral value; round first if needed. */ toBigInt(): bigint; toRational(): Rational; toJSON(): string; /** Throws. A `Decimal` never silently becomes a float. */ valueOf(): never; [Symbol.toPrimitive](hint: 'string' | 'number' | 'default'): string; readonly [Symbol.toStringTag] = \"Decimal\"; }",
+      "jsdocSummary": "An exact finite decimal: `coefficient × 10^-scale`. The scale is retained, so `'1.10'` stays `1.10` and `'1.10' × 3` is `3.30` — what a person expects from money and measurements. Equality is numeric: `decimal('1.0').eq('1.00')` is `true`."
+    },
+    {
+      "subpath": "./decimal",
+      "name": "DecimalContext",
+      "kind": "type",
+      "signature": "export type DecimalContext = { /** Fraction digits of a rounded quotient and of every function result. Default 20. */ readonly scale?: number; /** How a step that cannot be exact rounds. Default `'unnecessary'`: such a step throws `RoundingNecessaryError`. */ readonly rounding?: RoundingMode; };",
+      "jsdocSummary": "Where an inexact step rounds to."
+    },
+    {
+      "subpath": "./decimal",
+      "name": "DecimalFunction",
+      "kind": "type",
+      "signature": "export type DecimalFunction = (...args: Decimal[]) => Decimal;",
+      "jsdocSummary": "A host function in this domain: Decimals in, a Decimal out."
+    },
+    {
+      "subpath": "./decimal",
+      "name": "DecimalInput",
+      "kind": "type",
+      "signature": "export type DecimalInput = Decimal | string | number | bigint;",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./decimal",
+      "name": "Detailed",
+      "kind": "type",
+      "signature": "export type Detailed<T> = { readonly value: T; readonly exact: boolean; };",
+      "jsdocSummary": "A value and whether it is exact: `false` once any step rounded."
+    },
+    {
+      "subpath": "./decimal",
+      "name": "evaluate",
+      "kind": "function",
+      "signature": "export declare function evaluate<L extends Language = Scientific>(text: string, options?: EvaluateOptions<L>): Decimal | import(\"@arki/failure\").Failure<\"expr.invalid_text\", undefined> | import(\"@arki/failure\").Failure<\"expr.no_value\", undefined> | import(\"@arki/failure\").Failure<\"expr.over_budget\", undefined>;",
+      "jsdocSummary": "Parses, compiles and evaluates an expression with no variables: `evaluate('0.1 + 0.2')` is `0.3`. Reads outside text, so it returns the value or a failure from `EVALUATE_FAILURES` (`expr.invalid_text`, `expr.over_budget`, `expr.no_value`, each with the thrown error as `cause`) and never throws for bad text."
+    },
+    {
+      "subpath": "./decimal",
+      "name": "EvaluateOptions",
+      "kind": "type",
+      "signature": "export type EvaluateOptions<L extends Language = Scientific> = DecimalContext & CallOptions & { readonly language?: L; readonly syntax?: Syntax; /** Parse budgets plus the compile budgets. */ readonly limits?: Limits & ExactLimits; } & HostTables<L, DecimalFunction, DecimalInput>;",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./decimal",
+      "name": "ExactLimits",
+      "kind": "type",
+      "signature": "export type ExactLimits = CompileLimits & { /** * Digits: of each literal, checked at compile, and of a power or factorial * result, estimated before computing it (`9^9^9`, `10000!`). Default 1 000. */ readonly digits?: number; };",
+      "jsdocSummary": "The budgets of an exact domain's `compile` (`@arki/expr/decimal`, `@arki/expr/rational`)."
+    },
+    {
+      "subpath": "./decimal",
+      "name": "Reading",
+      "kind": "type",
+      "signature": "export type Reading = { readonly span: Span; /** The name as typed, e.g. `'xy'`. */ readonly name: string; /** The letters it was read as, e.g. `['x', 'y']`. */ readonly letters: readonly string[]; };",
+      "jsdocSummary": "A multi-letter name that `compile` read as a product of single letters."
+    },
+    {
+      "subpath": "./decimal",
+      "name": "RoundingMode",
+      "kind": "type",
+      "signature": "export type RoundingMode = (typeof ROUNDING_MODES)[number];",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./decimal",
+      "name": "Scope",
+      "kind": "type",
+      "signature": "export type Scope<V extends string = string> = Readonly<Record<V, DecimalInput>>;",
+      "jsdocSummary": "Values for the declared variables: anything `decimal()` accepts. Extra keys are ignored."
+    },
+    {
+      "subpath": "./float",
+      "name": "AbortSignalLike",
+      "kind": "type",
+      "signature": "export type AbortSignalLike = { readonly aborted: boolean; readonly reason?: unknown; };",
+      "jsdocSummary": "The part of `AbortSignal` that `sample` reads."
+    },
+    {
+      "subpath": "./float",
+      "name": "Angle",
+      "kind": "type",
+      "signature": "export type Angle = 'rad' | 'deg';",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./float",
+      "name": "compile",
+      "kind": "function",
+      "signature": "export declare function compile<const V extends string = never, L extends Language = Scientific>(expr: Expr, options?: CompileOptions<L, V>): CompiledFunction<V>;",
+      "jsdocSummary": "Compiles an expression to a function of its declared variables. Throws `ParseError` (`unknown-name`, `name-conflict`, `not-in-domain`, `arity`) and `ExprLimitError` here, before any point is evaluated."
+    },
+    {
+      "subpath": "./float",
+      "name": "CompiledEquation",
+      "kind": "type",
+      "signature": "export type CompiledEquation<V extends string = string> = { readonly left: CompiledFunction<V>; readonly right: CompiledFunction<V>; /** `left - right`, for root finding and back-substitution. */ readonly difference: CompiledFunction<V>; };",
+      "jsdocSummary": "The three sides of a compiled equation; all share the same slots."
+    },
+    {
+      "subpath": "./float",
+      "name": "CompiledFunction",
+      "kind": "type",
+      "signature": "export type CompiledFunction<V extends string = string> = { /** Evaluates at `scope`. Throws a typed error instead of returning `NaN` or ±Infinity. */ (scope?: Scope<V>): number; /** The single-variable fast path: no scope object. Throws unless exactly one variable is declared. */ at(x: number): number; /** * Evaluates at every `xs[i]` into `out[i]` and returns `out`. A point * with no finite value is `NaN` — a gap in a plot (C-22). This is the * only call in the package that returns `NaN`. */ sample(xs: Float64Array, out: Float64Array, options?: SampleOptions): Float64Array; /** The declared variables, in slot order. */ readonly variables: readonly V[]; /** Each multi-letter name read as a product of letters (`xy` → `x·y`). */ readonly readings: readonly Reading[]; /** The parse warnings plus `split-after-division` for `a/bc` read as `a/(b·c)`. */ readonly warnings: readonly Warning[]; };",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./float",
+      "name": "compileEquation",
+      "kind": "function",
+      "signature": "export declare function compileEquation<const V extends string = never, L extends Language = Scientific>(equation: Equation, options?: CompileOptions<L, V>): CompiledEquation<V>;",
+      "jsdocSummary": "Compiles both sides of `lhs = rhs` and their difference, on one set of slots (C-14, C-17)."
+    },
+    {
+      "subpath": "./float",
+      "name": "CompileOptions",
+      "kind": "type",
+      "signature": "export type CompileOptions<L extends Language = Scientific, V extends string = string> = CommonOptions<L> & { /** The variables, in slot order. Any other name must be a constant or split into declared letters. */ readonly variables?: readonly V[]; readonly limits?: CompileLimits; } & HostImplementations<L>;",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./float",
+      "name": "evaluate",
+      "kind": "function",
+      "signature": "export declare function evaluate<L extends Language = Scientific>(text: string, options?: EvaluateOptions<L>): number | import(\"@arki/failure\").Failure<\"expr.invalid_text\", undefined> | import(\"@arki/failure\").Failure<\"expr.no_value\", undefined> | import(\"@arki/failure\").Failure<\"expr.over_budget\", undefined>;",
+      "jsdocSummary": "Parses, compiles and evaluates an expression with no variables: the keypad's one-shot call (C-15). Reads outside text, so it returns the value or a failure from `EVALUATE_FAILURES` (`expr.invalid_text`, `expr.over_budget`, `expr.no_value`, each with the thrown error as `cause`) and never throws for bad text."
+    },
+    {
+      "subpath": "./float",
+      "name": "EvaluateOptions",
+      "kind": "type",
+      "signature": "export type EvaluateOptions<L extends Language = Scientific> = CommonOptions<L> & { readonly syntax?: Syntax; /** Parse budgets plus the compile budgets. */ readonly limits?: Limits & CompileLimits; } & HostImplementations<L>;",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./float",
+      "name": "FloatFunction",
+      "kind": "type",
+      "signature": "export type FloatFunction = (...args: number[]) => number;",
+      "jsdocSummary": "A host function in this domain: numbers in, a number out. It never sees the AST or the scope."
+    },
+    {
+      "subpath": "./float",
+      "name": "HostImplementations",
+      "kind": "type",
+      "signature": "export type HostImplementations<L> = ([HostFunctionName<L>] extends [never] ? { readonly functions?: Readonly<Record<string, FloatFunction>>; } : { readonly functions: Readonly<Record<HostFunctionName<L>, FloatFunction>>; }) & ([HostConstantName<L>] extends [never] ? { readonly constants?: Readonly<Record<string, number>>; } : { readonly constants: Readonly<Record<HostConstantName<L>, number>>; });",
+      "jsdocSummary": "Implementations for the host names of `L`: required by the types when the language declares a function or constant that `scientific` does not have."
+    },
+    {
+      "subpath": "./float",
+      "name": "Reading",
+      "kind": "type",
+      "signature": "export type Reading = { readonly span: Span; /** The name as typed, e.g. `'xy'`. */ readonly name: string; /** The letters it was read as, e.g. `['x', 'y']`. */ readonly letters: readonly string[]; };",
+      "jsdocSummary": "A multi-letter name that `compile` read as a product of single letters."
+    },
+    {
+      "subpath": "./float",
+      "name": "SampleOptions",
+      "kind": "type",
+      "signature": "export type SampleOptions = { /** Checked every 1 024 points; an aborted signal throws its `reason`. */ readonly signal?: AbortSignalLike; };",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./float",
+      "name": "Scope",
+      "kind": "type",
+      "signature": "export type Scope<V extends string = string> = Readonly<Record<V, number>>;",
+      "jsdocSummary": "Values for the declared variables. Extra keys are ignored."
+    },
+    {
+      "subpath": "./latex",
+      "name": "LatexOptions",
+      "kind": "type",
+      "signature": "export type LatexOptions = { /** Supplies function commands and constant symbols. Default `scientific`. */ readonly language?: Language; /** Bounds the recursion over hand-built trees. Default 256, as in `parse`. */ readonly limits?: { readonly depth?: number; }; };",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./latex",
+      "name": "toLatex",
+      "kind": "function",
+      "signature": "export declare function toLatex(value: Expr | Equation | Node, options?: LatexOptions): string;",
+      "jsdocSummary": "LaTeX for an expression, equation or node: `toLatex(parse('sqrt(x)/2'))` is `'\\\\frac{\\\\sqrt{x}}{2}'`. Pass the language the expression was parsed with so host functions use their `latex` command."
+    },
+    {
+      "subpath": "./rational",
+      "name": "AbortSignalLike",
+      "kind": "type",
+      "signature": "export type AbortSignalLike = { readonly aborted: boolean; readonly reason?: unknown; };",
+      "jsdocSummary": "The part of `AbortSignal` that `sample` reads."
+    },
+    {
+      "subpath": "./rational",
+      "name": "CallOptions",
+      "kind": "type",
+      "signature": "export type CallOptions = { /** Checked before each operation on a value above 100 digits; an aborted signal throws its `reason`. */ readonly signal?: AbortSignalLike; };",
+      "jsdocSummary": "Options of a single call."
+    },
+    {
+      "subpath": "./rational",
+      "name": "compile",
+      "kind": "function",
+      "signature": "export declare function compile<const V extends string = never, L extends Language = Scientific>(expr: Expr, options?: CompileOptions<L, V>): CompiledFunction<V>;",
+      "jsdocSummary": "Compiles an expression to a function of its declared variables, on Rationals. Throws `ParseError` (`unknown-name`, `name-conflict`, `not-in-domain` for `exp`, logarithms, trigonometry, `pi`, `e`, `i`, `arity`) and `ExprLimitError` here, before any evaluation. Constant subtrees are folded."
+    },
+    {
+      "subpath": "./rational",
+      "name": "CompiledEquation",
+      "kind": "type",
+      "signature": "export type CompiledEquation<V extends string = string> = ExactEquation<Rational, RationalInput, V>;",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./rational",
+      "name": "CompiledFunction",
+      "kind": "type",
+      "signature": "export type CompiledFunction<V extends string = string> = ExactFunction<Rational, RationalInput, V>;",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./rational",
+      "name": "compileEquation",
+      "kind": "function",
+      "signature": "export declare function compileEquation<const V extends string = never, L extends Language = Scientific>(equation: Equation, options?: CompileOptions<L, V>): CompiledEquation<V>;",
+      "jsdocSummary": "Compiles both sides of `lhs = rhs` and their difference, on one set of slots."
+    },
+    {
+      "subpath": "./rational",
+      "name": "CompileOptions",
+      "kind": "type",
+      "signature": "export type CompileOptions<L extends Language = Scientific, V extends string = string> = { /** The language the expression was parsed with. Default `scientific`. */ readonly language?: L; /** The variables, in slot order. Any other name must be a constant or split into declared letters. */ readonly variables?: readonly V[]; readonly limits?: ExactLimits; } & HostTables<L, RationalFunction, RationalInput>;",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./rational",
+      "name": "Detailed",
+      "kind": "type",
+      "signature": "export type Detailed<T> = { readonly value: T; readonly exact: boolean; };",
+      "jsdocSummary": "A value and whether it is exact: `false` once any step rounded."
+    },
+    {
+      "subpath": "./rational",
+      "name": "evaluate",
+      "kind": "function",
+      "signature": "export declare function evaluate<L extends Language = Scientific>(text: string, options?: EvaluateOptions<L>): import(\"@arki/failure\").Failure<\"expr.invalid_text\", undefined> | import(\"@arki/failure\").Failure<\"expr.no_value\", undefined> | import(\"@arki/failure\").Failure<\"expr.over_budget\", undefined> | Rational;",
+      "jsdocSummary": "Parses, compiles and evaluates an expression with no variables: `evaluate('8^(2/3)')` is 4. Reads outside text, so it returns the value or a failure from `EVALUATE_FAILURES` (`expr.invalid_text`, `expr.over_budget`, `expr.no_value`, each with the thrown error as `cause`) and never throws for bad text."
+    },
+    {
+      "subpath": "./rational",
+      "name": "EvaluateOptions",
+      "kind": "type",
+      "signature": "export type EvaluateOptions<L extends Language = Scientific> = CallOptions & { readonly language?: L; readonly syntax?: Syntax; /** Parse budgets plus the compile budgets. */ readonly limits?: Limits & ExactLimits; } & HostTables<L, RationalFunction, RationalInput>;",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./rational",
+      "name": "ExactLimits",
+      "kind": "type",
+      "signature": "export type ExactLimits = CompileLimits & { /** * Digits: of each literal, checked at compile, and of a power or factorial * result, estimated before computing it (`9^9^9`, `10000!`). Default 1 000. */ readonly digits?: number; };",
+      "jsdocSummary": "The budgets of an exact domain's `compile` (`@arki/expr/decimal`, `@arki/expr/rational`)."
+    },
+    {
+      "subpath": "./rational",
+      "name": "Rational",
+      "kind": "class",
+      "signature": "export declare class Rational { readonly numerator: bigint; readonly denominator: bigint; private constructor(); /** Normalizes sign and reduces by the GCD. */ static fromParts(numerator: bigint, denominator: bigint): Rational; static from(value: RationalInput): Rational; /** Knuth's addition: reduce through the denominators' GCD instead of the full product. */ plus(other: RationalInput): Rational; minus(other: RationalInput): Rational; /** Cross-cancels before multiplying, so the products never carry common factors. */ times(other: RationalInput): Rational; /** Cross-cancels like `times`, so the result is reduced before its size is checked. */ dividedBy(other: RationalInput): Rational; /** Integer exponent; negative exponents invert. */ pow(exponent: number): Rational; /** The reciprocal: `2/3` → `3/2`. */ inverse(): Rational; abs(): Rational; negated(): Rational; /** * The closest fraction whose denominator is at most `maxDenominator` * (continued-fraction search, like Python's `limit_denominator`): * `ratio('3.14159').approximate(1000)` → `355/113`. */ approximate(maxDenominator: IntegerInput): Rational; compareTo(other: RationalInput): -1 | 0 | 1; eq(other: RationalInput): boolean; lt(other: RationalInput): boolean; lte(other: RationalInput): boolean; gt(other: RationalInput): boolean; gte(other: RationalInput): boolean; isZero(): boolean; isPositive(): boolean; isNegative(): boolean; isInteger(): boolean; sign(): -1 | 0 | 1; /** Exact when the fraction terminates; otherwise needs `{ scale, rounding }` or it throws. */ toDecimal(options?: ScaleOptions): Decimal; /** `7/2` → `{ whole: 3n, fraction: 1/2 }`; `-7/2` → `{ whole: -3n, fraction: -1/2 }`. */ toMixed(): MixedNumber; /** * The nearest double, ties to even, by rounding in binary (never through a * decimal string, which could round twice). Throws on overflow, or when a * non-zero value would underflow to zero. */ toNumber(): number; /** Requires an integral value. */ toBigInt(): bigint; /** `'1/3'`, `'-7/2'`, or just `'4'` for integers. */ toString(): string; toJSON(): string; /** Throws. A `Rational` never silently becomes a float. */ valueOf(): never; [Symbol.toPrimitive](hint: 'string' | 'number' | 'default'): string; readonly [Symbol.toStringTag] = \"Rational\"; }",
+      "jsdocSummary": "An exact fraction of two bigints, always reduced, denominator always positive, zero always `0/1`. Where `Decimal` must throw (`1 ÷ 3`), a `Rational` just keeps going."
+    },
+    {
+      "subpath": "./rational",
+      "name": "RationalFunction",
+      "kind": "type",
+      "signature": "export type RationalFunction = (...args: Rational[]) => Rational;",
+      "jsdocSummary": "A host function in this domain: Rationals in, a Rational out."
+    },
+    {
+      "subpath": "./rational",
+      "name": "RationalInput",
+      "kind": "type",
+      "signature": "export type RationalInput = Rational | DecimalInput;",
+      "jsdocSummary": ""
+    },
+    {
+      "subpath": "./rational",
+      "name": "Reading",
+      "kind": "type",
+      "signature": "export type Reading = { readonly span: Span; /** The name as typed, e.g. `'xy'`. */ readonly name: string; /** The letters it was read as, e.g. `['x', 'y']`. */ readonly letters: readonly string[]; };",
+      "jsdocSummary": "A multi-letter name that `compile` read as a product of single letters."
+    },
+    {
+      "subpath": "./rational",
+      "name": "Scope",
+      "kind": "type",
+      "signature": "export type Scope<V extends string = string> = Readonly<Record<V, RationalInput>>;",
+      "jsdocSummary": "Values for the declared variables: anything `ratio()` accepts. Extra keys are ignored."
+    }
+  ],
+  "groups": [],
+  "errorCodes": [
+    "expr.invalid_locale",
+    "expr.invalid_syntax",
+    "expr.invalid_text",
+    "expr.no_value",
+    "expr.over_budget"
+  ]
+}
