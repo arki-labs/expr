@@ -1,4 +1,4 @@
-Read-only mirror of `@arki/expr` v0.1.0. Source and issues: arki-labs/arki. Docs: https://arki.dev/packages/expr. Published 2026-11-03 with provenance https://www.npmjs.com/package/@arki/expr/v/0.1.0#provenance.
+Read-only mirror of `@arki/expr` v0.1.1. Source and issues: arki-labs/arki. Docs: https://arki.dev/packages/expr. Published 2026-11-23 with provenance https://www.npmjs.com/package/@arki/expr/v/0.1.1#provenance.
 
 # @arki/expr
 
@@ -60,6 +60,16 @@ A name followed by `(` is a call only when the language registers it as a functi
 
 Pure TypeScript with no `eval`, no `new Function`, and no Node built-ins. It runs wherever `@arki/math` runs: Node, Bun, Deno, browsers and Hermes. The depending `@arki/math` package carries the cross-engine results table.
 
+<!-- runtimes:start -->
+| Runtime | Result | Version tested | Date (UTC) |
+| --- | --- | --- | --- |
+| node | pass | v22.13.1 | 2026-11-05 |
+| bun | pass | 1.4.2 | 2026-11-05 |
+| deno | pass | 2.9.8 | 2026-11-05 |
+| browser | pass | Chromium 156.0.8078.4 | 2026-11-05 |
+| hermes | pass | V1 250829098.0.17 | 2026-11-05 |
+<!-- runtimes:end -->
+
 ## Public imports
 
 | Import                | What it gives you                                                                      |
@@ -88,6 +98,10 @@ Parsers of outside values return, builders throw. Nothing returns `NaN`, `Infini
 - **Plot gaps:** `f.sample` is the one call that returns `NaN`, and only to mark a point with no value.
 
 Branch on the failure at the edge where users type. Let the other errors reach your error boundary.
+
+## Observability
+
+Pure computation: no I/O, so no spans or metrics.
 
 ## Limits
 
